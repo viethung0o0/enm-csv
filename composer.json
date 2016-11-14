@@ -18,5 +18,11 @@
         "psr-4": {
             "Enigmacsv\\DummyCsv": "src/"
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url":  "git@bitbucket.org:nldanang/enigma-dummy-package.git"
+        }
+    ]
 }
