@@ -1,0 +1,22 @@
+{
+    "name": "enigmacsv/dummy-csv",
+    "description": "This is enigmacsv package will create somme template csv",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "HungPv",
+            "email": "hung.pv@neo-lab.vn"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "league/csv": "^8.0",
+        "fzaninotto/faker": "~1.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Enigmacsv\\DummyCsv": "src/"
+        }
+    }
+}
