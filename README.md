@@ -3,7 +3,7 @@
 Install via composer - edit your composer.json to require the package.
 ```
 "require": {
-    "enigmacsv/dummy-csv": "^1.0"
+    "enigmacsv/dummy-csv": "1.0.*"
 }
 ```
 Then run composer update in your terminal to pull it in.
