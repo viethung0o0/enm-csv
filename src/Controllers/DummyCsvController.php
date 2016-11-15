@@ -357,7 +357,7 @@ class DummyCsvController extends Controller
         $depositType = \App\Models\Employee::$depositTypes ?? self::$depositTypes;
 
         return [
-            '社員コード' => '	CPN_' . $params['company_id'] . '_BR_' . $params['branch_id'] . '_EMP_' . $params['employee_id'],
+            '社員コード' => 'CPN_' . $params['company_id'] . '_BR_' . $params['branch_id'] . '_EMP_' . $params['employee_id'],
             'メールアドレス' => $faker->unique()->email,
             '氏名（漢字）' => str_replace(" ", "", $faker->name),
             '氏名（カナ）' => str_replace(" ", "", $faker->kanaName),
