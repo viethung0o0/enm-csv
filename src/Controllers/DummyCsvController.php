@@ -323,6 +323,7 @@ class DummyCsvController extends Controller
             $faker = \Faker\Factory::create('ja_JP');
             $companyId = $request->get('company_id');
             $branchId = $request->get('branch_id');
+            $take = $request->get('take', self::TAKE_EMPLOYEE);
 
             $headers = $this->getEmployeeCsvHeader();
             $branch = $this->getBranch([
@@ -330,7 +331,7 @@ class DummyCsvController extends Controller
                 'branch_id' => $branchId
             ]);
 
-            for ($i = 1; $i <= 10000; $i++) {
+            for ($i = 1; $i <= $take; $i++) {
                 $response[] = $this->createDummyEmployeeData($faker, [
                     'branch_id' => $branch->id,
                     'company_id' => $companyId,
