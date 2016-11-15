@@ -18,5 +18,5 @@ http://{url}/dummy/csv/employee?company_id=1&branch_id=1&take=1000
 ```
 ###Dummy csv for employee kintai
 ```
-http://{url}/dummy/csv/kintai?company_id=1&branch_id=1$&take=1000
+http://{url}/dummy/csv/kintai?company_id=1&branch_id=1&&take=1000
 ```
