@@ -20,3 +20,15 @@ http://{url}/dummy/csv/employee?company_id=1&branch_id=1&take=1000
 ```
 http://{url}/dummy/csv/kintai?company_id=1&branch_id=1&&take=1000
 ```
+###URL parameters:
+1. Employee
+    * company_id=1
+    * branch_id=1
+    * take=1 (default=1000)
+    
+2. Kintai
+    * company_id=1
+    * branch_id=1
+    * take=1 (default=1000)
+    * type=1 (default=1)
+    * company_kintai_id=1 (default=1)
