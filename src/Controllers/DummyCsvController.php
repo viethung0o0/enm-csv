@@ -95,6 +95,42 @@ class DummyCsvController extends Controller
     }
 
     /**
+     * Get pattern of company kintai
+     *
+     * @param int $type Type
+     *
+     * @return get Pattern
+     */
+    public function getKintaiPattern(int $type)
+    {
+        switch ($type) {
+            case \App\Models\CompanyKintai::KINTAI_PATTERN_1:
+                $pattern = config('define.employees.kintai_format.' . \App\Models\CompanyKintai::KINTAI_PATTERN_1);
+                break;
+            case \App\Models\CompanyKintai::KINTAI_PATTERN_2:
+                $pattern = config('define.employees.kintai_format.' . \App\Models\CompanyKintai::KINTAI_PATTERN_2);
+                break;
+            case \App\Models\CompanyKintai::KINTAI_PATTERN_3:
+                $pattern = config('define.employees.kintai_format.' . \App\Models\CompanyKintai::KINTAI_PATTERN_3);
+                $rest = array_splice($pattern, 4);
+                for ($i = 1; $i <= 20; $i++) {
+                    $pattern['hourly_wage_' . $i] = trans('labels.kintai_format.hourly_wage', [
+                        'num' => $i
+                    ]);
+                    $pattern['working_hour_' . $i] = trans('labels.kintai_format.working_hour', [
+                        'num' => $i
+                    ]);
+                }
+                $pattern += $rest;
+                break;
+            default :
+                $pattern = null;
+        }
+
+        return $pattern;
+    }
+
+    /**
      * Export csv kintais
      *
      * @param Request $request Request
@@ -106,12 +142,17 @@ class DummyCsvController extends Controller
         try {
             $companyId = $request->get('company_id');
             $branchId = $request->get('branch_id');
+            $type = $request->get('type', 1);
             $take = $request->get('take', self::TAKE_EMPLOYEE);
+            $companyKintaiId = $request->get('company_kintai_id', 1);
             $faker = \Faker\Factory::create('ja_JP');
 
             $companyKintai = $this->getCompanyKintai([
-                'company_id' => $companyId
+                'company_id' => $companyId,
+                'type' => $type,
+                'id' => $companyKintaiId
             ]);
+
             $companyKintaiAttribute = $this->getCompanyKintaiAttributes([
                 'company_kintai_id' => $companyKintai->id
             ]);
@@ -124,13 +165,15 @@ class DummyCsvController extends Controller
 
             $data = $this->getContentCsvKintai($faker, [
                 'employees' => $employees,
-                'company_kintai_attribute' => $companyKintaiAttribute
+                'company_kintai_attribute' => $companyKintaiAttribute,
+                'type' => $type
             ]);
             $headers = array_keys(reset($data));
 
             return $this->downloadCsv($headers, $data, "test_kintai.csv");
         } catch (\Exception $exc) {
-            return response()->json([$exc->getMessage(), $exc->getTrace()]);
+            dd($exc);
+            return response()->json([$exc->getMessage(), $exc]);
         }
     }
 
@@ -147,9 +190,11 @@ class DummyCsvController extends Controller
         $headers = array_keys($data['company_kintai_attribute']);
         $result = [];
         foreach ($data['employees'] as $employee) {
+            //get dummy data
             $array = $this->createDummyKintaiData($faker, [
                 'employees' => $employee ?? uniqid()
             ]);
+
             $attribute = array_flip(array_filter($data['company_kintai_attribute']));
             $attributeValue = array_intersect_key($array, $attribute);
             $dontMap = array_diff_key(array_flip($headers), array_flip($attribute));
@@ -203,10 +248,17 @@ class DummyCsvController extends Controller
      */
     private function getCompanyKintai($data, $columns = ['*'])
     {
-        return DB::table($this->config['company_kintai_table'])
-                ->select($columns)
-                ->where('company_id', $data['company_id'])
-                ->first();
+        $companyKintai = DB::table($this->config['company_kintai_table'])
+            ->select($columns)
+            ->where('company_id', $data['company_id'])
+            ->where('type', $data['type']);
+
+        if (!empty($data['id'])) {
+            return $companyKintai->where('id', $data['id'])
+                    ->first();
+        }
+
+        return $companyKintai->get()->random();
     }
 
     /**
@@ -272,7 +324,7 @@ class DummyCsvController extends Controller
      */
     protected function createDummyKintaiData($faker, $data)
     {
-        return [
+        $fakerData = [
             'employee_code' => !empty($data['employees']) ? $data['employees']->code : '',
             'updated_date' => $faker->dateTimeBetween('-10 years', '-2 years')->format('Y-m-d'),
             'branch_name' => str_replace(" ", "", $faker->name),
@@ -284,14 +336,14 @@ class DummyCsvController extends Controller
             'working_days' => rand(1, 7),
             'normal_working_hours' => rand(6, 8),
             'overtime_hours' => rand(6, 8),
-            'latenight_working_hours' => rand(0, 7),
-            'latenight_overtime_hours' => rand(1, 3),
-            'holiday_working_hours' => rand(1, 3),
-            'holiday_overtime_hours' => rand(0, 8),
-            'holiday_latenight_working_hours' => rand(0, 8),
-            'holiday_latenight_overtime_hours' => rand(0, 5),
             'others' => $faker->sentence(),
         ];
+        for ($i = 1; $i <= 20; $i++) {
+            $fakerData['hourly_wage_' . $i] = rand(1, 7);
+            $fakerData['working_hour_' . $i] = rand(200, 500);
+        }
+
+        return $fakerData;
     }
 
     /**
@@ -340,6 +392,7 @@ class DummyCsvController extends Controller
             }
             return $this->downloadCsv($headers, $response, "test_employee.csv");
         } catch (\Exception $ex) {
+            dd($ex);
             return response()->json([$ex->getMessage(), $ex->getTrace()]);
         }
     }
@@ -362,7 +415,7 @@ class DummyCsvController extends Controller
             'メールアドレス' => $faker->unique()->email,
             '氏名（漢字）' => str_replace(" ", "", $faker->name),
             '氏名（カナ）' => str_replace(" ", "", $faker->kanaName),
-            '契約種別（従業員属性）' => $faker->randomElement($contractType),
+            '契約種別（従業員属性）' => trans($faker->randomElement($contractType)),
             '契約開始日（入社日）' => $faker->dateTimeBetween('-10 years', '-2 years')->format('Y-m-d'),
             '契約終了日' => $faker->dateTimeBetween('-1 years', 'now')->format('Y-m-d'),
             '月給' => rand(1000, 2000),
@@ -373,7 +426,7 @@ class DummyCsvController extends Controller
             '振込先金融機関名称（カナ）' => str_replace(" ", "", $faker->kanaName),
             '振込先営業店コード' => $this->randomNumberByLength(3),
             '振込先営業店名称（カナ）' => str_replace(" ", "", $faker->kanaName),
-            '預金種目' => $faker->randomElement($depositType),
+            '預金種目' => trans($faker->randomElement($depositType)),
             '口座番号' => $this->randomNumberByLength(7),
             '受取人名（カナ）' => str_replace(" ", "", $faker->kanaName),
         ];
