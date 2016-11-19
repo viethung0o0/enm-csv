@@ -114,10 +114,10 @@ class DummyCsvController extends Controller
                 $pattern = config('define.employees.kintai_format.' . \App\Models\CompanyKintai::KINTAI_PATTERN_3);
                 $rest = array_splice($pattern, 4);
                 for ($i = 1; $i <= 20; $i++) {
-                    $pattern['hourly_wage_' . $i] = trans('labels.kintai_format.hourly_wage', [
+                    $pattern['salary_' . $i] = trans('labels.kintai_format.hourly_wage', [
                         'num' => $i
                     ]);
-                    $pattern['working_hour_' . $i] = trans('labels.kintai_format.working_hour', [
+                    $pattern['time_' . $i] = trans('labels.kintai_format.working_hour', [
                         'num' => $i
                     ]);
                 }
@@ -144,7 +144,7 @@ class DummyCsvController extends Controller
             $branchId = $request->get('branch_id');
             $type = $request->get('type', 1);
             $take = $request->get('take', self::TAKE_EMPLOYEE);
-            $companyKintaiId = $request->get('company_kintai_id', 1);
+            $companyKintaiId = $request->get('company_kintai_id');
             $faker = \Faker\Factory::create('ja_JP');
 
             $companyKintai = $this->getCompanyKintai([
@@ -257,8 +257,11 @@ class DummyCsvController extends Controller
             return $companyKintai->where('id', $data['id'])
                     ->first();
         }
-
-        return $companyKintai->get()->random();
+        $companyKintais = $companyKintai->get();
+        if ($companyKintais->isEmpty()) {
+            throw new \Exception('Type or company kintai id not found');
+        }
+        return $companyKintais->random();
     }
 
     /**
@@ -339,8 +342,8 @@ class DummyCsvController extends Controller
             'others' => $faker->sentence(),
         ];
         for ($i = 1; $i <= 20; $i++) {
-            $fakerData['hourly_wage_' . $i] = rand(1, 7);
-            $fakerData['working_hour_' . $i] = rand(200, 500);
+            $fakerData['salary_' . $i] = rand(1, 7);
+            $fakerData['time_' . $i] = rand(200, 500);
         }
 
         return $fakerData;
