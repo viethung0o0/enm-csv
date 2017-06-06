@@ -220,22 +220,24 @@ class DummyCsvController extends Controller
     /**
      * Get data of employees table
      *
-     * @param array $data    Data
+     * @param array $params  Parameters
      * @param array $columns Columns
      *
      * @return aray
      */
     public function getEmployees($params, $columns = ['*'])
     {
-        $employees = DB::table($this->config['employee_table'])
+        $query = DB::table($this->config['employee_table'])
             ->select($columns)
             ->where('company_id', $params['company_id'])
-            ->where('branch_id', $params['branch_id'])
             ->orderBy('id', 'asc')
-            ->take($params['take'])
-            ->get();
+            ->take($params['take']);
+        
+        if (!is_null($params['branch_id'])) {
+            $query->where('branch_id', $params['branch_id']);
+        }
 
-        return $employees->random($employees->count());
+        return $query->get();
     }
 
     /**
